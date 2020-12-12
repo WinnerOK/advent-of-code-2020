@@ -79,6 +79,13 @@ func part1(data []string) {
 	println("Distance from start:", manhattanDist(position, IntVector{x: 0, y: 0}))
 }
 
+
+/*
+	Alternative, more specific approach to rotation:
+		Rotation by 90 degrees clockwise == X * (-1); swap x, y
+		Rotation by 90 degree counterclockwise == clockwise rotation by 270
+*/
+
 func makeMovePart2(actionStr string, ship, waypoint IntVector) (IntVector, IntVector) {
 	action, magnitude := parseAction(actionStr)
 	switch {
