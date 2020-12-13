@@ -82,6 +82,10 @@ func part2(busIDs []int){
 			n = append(n, big.NewInt(int64(busID)))
 		}
 	}
-	fmt.Println(crt(a,n))
+	answer, err := crt(a,n)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Part 2:",  answer)
 }
 
