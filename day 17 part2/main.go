@@ -65,22 +65,9 @@ func generateNeighbours(coordinate Coordinate) []Coordinate {
 
 func countActiveNeighbours(m cubeMap, coordinate Coordinate) int {
 	activeNeighbours := 0
-	for dx := -1; dx <= 1; dx++ {
-		for dy := -1; dy <= 1; dy++ {
-			for dz := -1; dz <= 1; dz++ {
-				for dw := -1; dw <= 1; dw++ {
-					if !(dx == 0 && dy == 0 && dz == 0 && dw == 0) {
-						if val, present := m[Coordinate{
-							x: coordinate.x + dx,
-							y: coordinate.y + dy,
-							z: coordinate.z + dz,
-							w: coordinate.w + dw,
-						}]; present && val {
-							activeNeighbours += 1
-						}
-					}
-				}
-			}
+	for _, neighbour := range generateNeighbours(coordinate){
+		if val, present := m[neighbour]; present && val {
+			activeNeighbours += 1
 		}
 	}
 	return activeNeighbours
