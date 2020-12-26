@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -15,14 +14,7 @@ func main() {
 	rules := parseRules(input[0:splitIdx])
 	tests := input[splitIdx+1:]
 	part1(rules, tests)
-	//newRules := part2Rules(rules)
-	//part1(newRules, tests)
-}
-
-func part2Rules(rules map[int]interface{}) map[int]interface{} {
-	rules[8] = OrRule{options: []AndRule{{refs: []int{42, 8}}, {refs: []int{42}}}}
-	rules[11] = OrRule{options: []AndRule{{refs: []int{42, 11, 31}}, {refs: []int{42, 31}}}}
-	return rules
+	part2(rules, tests)
 }
 
 type ExactRule struct {
@@ -39,7 +31,7 @@ type OrRule struct {
 
 func lexRule(rule string) interface{} {
 	if strings.Contains(rule, "\"") {
-		character := string(strings.Split(rule, "\"")[1])
+		character := strings.Split(rule, "\"")[1]
 		return ExactRule{character: character}
 	} else if strings.Contains(rule, "|") {
 		optionsStr := strings.Split(rule, " | ")
@@ -100,29 +92,84 @@ func matchRule(rules map[int]interface{}, currentRule interface{}, test string) 
 }
 
 func part1(rules map[int]interface{}, tests []string) {
-	tests = []string{
-		"bbabbbbaabaabba",
-		"babbbbaabbbbbabbbbbbaabaaabaaa",
-		"aaabbbbbbaaaabaababaabababbabaaabbababababaaa",
-		"bbbbbbbaaaabbbbaaabbabaaa",
-		"bbbababbbbaaaaaaaabbababaaababaabab",
-		"ababaaaaaabaaab",
-		"ababaaaaabbbaba",
-		"baabbaaaabbaaaababbaababb",
-		"abbbbabbbbaaaababbbbbbaaaababb",
-		"aaaaabbaabaaaaababaa",
-		"aaaabbaabbaaaaaaabbbabbbaaabbaabaaa",
-		"aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba",
-	}
 	answer := 0
 	for _, test := range tests {
 		match, rem := matchRule(rules, rules[0], test)
-		fmt.Printf("%s -> (%t, %s)\n", test, match, rem)
+		//fmt.Printf("%s -> (%t, %s)\n", test, match, rem)
 		fullMatch := match && len(rem) == 0
 		if fullMatch {
 			answer += 1
 		}
 	}
-	println(answer)
+	println("Part 1:",answer)
+}
 
+func part2Rules(rules map[int]interface{}) map[int]interface{} {
+	rules[8] = OrRule{options: []AndRule{{refs: []int{42, 8}}, {refs: []int{42}}}}
+	rules[11] = OrRule{options: []AndRule{{refs: []int{42, 11, 31}}, {refs: []int{42, 31}}}}
+	return rules
+}
+
+func part2(rules map[int]interface{}, tests []string) {
+	rules = part2Rules(rules)
+	answer := 0
+
+	for _, test := range tests {
+		//	need to match rule 0 = 8 11
+		//	rule 8: 42+
+		//	rule 11: 42 (42 31)* 31
+		intermediateRemainders := oneOrMore(rules, rules[42], test)
+		for _, remainder := range intermediateRemainders {
+			finalRemainders := middleExpand(rules, rules[42], rules[31], remainder)
+			finalMatch := make([]bool, len(finalRemainders))
+			for i := range finalRemainders {
+				finalMatch[i] = len(finalRemainders[i]) == 0
+			}
+			if any(finalMatch, true) {
+				answer++
+			}
+		}
+
+	}
+	println("Part 2:",answer)
+}
+
+func oneOrMore(rules map[int]interface{}, repetitiveRule interface{}, test string) []string {
+	//	rule 8: 42+
+	result := []string{}
+	for {
+		matched, remainder := matchRule(rules, repetitiveRule, test)
+		if matched {
+			result = append(result, remainder)
+			test = remainder
+		} else {
+			break
+		}
+	}
+	return result
+}
+
+func middleExpand(rules map[int]interface{}, leftRule, rightRule interface{}, test string) []string {
+	//	rule 11: 42 (42 31)* 31
+	result := []string{}
+Attempts:
+	for repetitions := 1; repetitions <= 30; repetitions++ {
+		var matched bool
+		current := test
+		for i := 1; i <= repetitions; i++ {
+			matched, current = matchRule(rules, leftRule, current)
+			if !matched {
+				continue Attempts
+			}
+		}
+		print()
+		for j := 1; j <= repetitions; j++ {
+			matched, current = matchRule(rules, rightRule, current)
+			if !matched {
+				continue Attempts
+			}
+		}
+		result = append(result, current)
+	}
+	return result
 }
